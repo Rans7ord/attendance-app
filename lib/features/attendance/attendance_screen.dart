@@ -4,6 +4,7 @@ import '../../core/utils/responsive.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/api_service.dart';
 import 'attendance_history_screen.dart';
+import 'package:dio/dio.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -52,6 +53,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _clockedIn = !_clockedIn;
         _status = _clockedIn ? 'Clocked in' : 'Clocked out';
       });
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422) {
+        final message = e.response?.data['message'] ?? 'You are outside the allowed area.';
+        final distance = e.response?.data['distance_m'];
+        setState(() => _status = distance != null
+            ? '$message (${distance}m away)'
+            : message);
+      } else {
+        setState(() => _status = 'Something went wrong — try again');
+      }
     } catch (e) {
       setState(() => _status = 'Something went wrong — try again');
     }

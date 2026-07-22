@@ -11,7 +11,12 @@ class ApiService {
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await _dio.post('/login', data: {'email': email, 'password': password});
     await _storage.write(key: 'token', value: response.data['token']);
+    await _storage.write(key: 'role', value: response.data['role'] ?? 'member');
     return response.data;
+  }
+
+  Future<String> getRole() async {
+    return await _storage.read(key: 'role') ?? 'member';
   }
 
   Future<Map<String, dynamic>> clockIn(double lat, double lng) async {
@@ -36,4 +41,32 @@ class ApiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}));
     return response.data;
   }
+
+  Future<List<dynamic>> getBranches() async {
+    final token = await _storage.read(key: 'token');
+    final response = await _dio.get('/branches',
+        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> createBranch({
+    required String name,
+    String? address,
+    required double lat,
+    required double lng,
+    int radius = 150,
+  }) async {
+    final token = await _storage.read(key: 'token');
+    final response = await _dio.post('/branches',
+        data: {
+          'name': name,
+          'address': address,
+          'gps_lat': lat,
+          'gps_lng': lng,
+          'geofence_radius_m': radius,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    return response.data;
+  }
+
 }

@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/services/api_service.dart';
 import '../attendance/attendance_screen.dart';
 import '../attendance/attendance_history_screen.dart';
+import '../admin/branches_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final _api = ApiService();
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final role = await _api.getRole();
+    setState(() => _isAdmin = role == 'admin');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +59,17 @@ class DashboardScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
                   ),
                 ),
+                if (_isAdmin) ...[
+                  const SizedBox(height: 12),
+                  _DashboardCard(
+                    icon: Icons.business,
+                    title: 'Manage Branches',
+                    subtitle: 'Set locations and geofence radius',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BranchesScreen()),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
