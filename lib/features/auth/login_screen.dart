@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/responsive.dart';
-import '../attendance/attendance_screen.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../../core/services/api_service.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await _api.login(_emailController.text, _passwordController.text);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } catch (e) {
       if (!mounted) return;

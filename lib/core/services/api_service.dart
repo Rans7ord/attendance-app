@@ -29,4 +29,11 @@ class ApiService {
         options: Options(headers: {'Authorization': 'Bearer $token'}));
     return response.data;
   }
+
+  Future<List<dynamic>> getAttendanceHistory() async {
+    final token = await _storage.read(key: 'token');
+    final response = await _dio.get('/attendance',
+        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    return response.data;
+  }
 }

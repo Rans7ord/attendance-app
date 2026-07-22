@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/utils/responsive.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/services/api_service.dart';
+import 'attendance_history_screen.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -75,6 +76,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   onPressed: _clockInOut,
                   icon: Icon(_clockedIn ? Icons.logout : Icons.login),
                   label: Text(_clockedIn ? 'Clock Out' : 'Clock In'),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
+                  ),
+                  icon: const Icon(Icons.history),
+                  label: const Text('View History'),
                 ),
               ],
             ),
