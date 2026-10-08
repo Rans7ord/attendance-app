@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>We use your camera to take a profile photo when you join.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location when you clock in or out to verify the attendance location.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>We use Face ID to confirm your attendance action on this device.</string>
 </dict>
 </plist>
