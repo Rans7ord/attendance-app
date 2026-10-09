@@ -22,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _api = ApiService();
   bool _isAdmin = false;
   bool _isSupervisor = false;
+  bool _isManager = false;
   String _role = 'member';
 
   @override
@@ -36,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _role = role;
       _isAdmin = role == 'admin' || role == 'super_admin';
       _isSupervisor = role == 'supervisor';
+      _isManager = role == 'manager';
     });
   }
 
@@ -94,40 +96,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 _GreetingHeader(role: _role),
                 const SizedBox(height: AppSpacing.xl),
-                Text('Quick Actions', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: AppSpacing.sm),
-                _DashboardCard(
-                  icon: Icons.fingerprint_rounded,
-                  iconColor: AppColors.primary,
-                  iconBg: AppColors.primary.withValues(alpha: 0.10),
-                  title: 'Clock In / Out',
-                  subtitle: "Record today's attendance",
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+                // Admins oversee the company and don't clock in themselves,
+                // so the personal clock-in cards are for everyone else.
+                if (!_isAdmin) ...[
+                  Text('Quick Actions', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.fingerprint_rounded,
+                    iconColor: AppColors.primary,
+                    iconBg: AppColors.primary.withValues(alpha: 0.10),
+                    title: 'Clock In / Out',
+                    subtitle: "Record today's attendance",
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _DashboardCard(
-                  icon: Icons.history_rounded,
-                  iconColor: AppColors.accent,
-                  iconBg: AppColors.accentSoft,
-                  title: 'Attendance History',
-                  subtitle: 'View your past records',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.history_rounded,
+                    iconColor: AppColors.accent,
+                    iconBg: AppColors.accentSoft,
+                    title: 'Attendance History',
+                    subtitle: 'View your past records',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _DashboardCard(
-                  icon: Icons.calendar_month_rounded,
-                  iconColor: AppColors.primary,
-                  iconBg: AppColors.primary.withValues(alpha: 0.10),
-                  title: 'My Calendar',
-                  subtitle: 'See your month at a glance',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.calendar_month_rounded,
+                    iconColor: AppColors.primary,
+                    iconBg: AppColors.primary.withValues(alpha: 0.10),
+                    title: 'My Calendar',
+                    subtitle: 'See your month at a glance',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                    ),
                   ),
-                ),
+                ],
                 if (_isSupervisor) ...[
                   const SizedBox(height: AppSpacing.lg),
                   Text('My Branch', style: Theme.of(context).textTheme.titleMedium),
@@ -140,6 +146,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     subtitle: 'See who\'s in, late, or absent',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const TodayAttendanceScreen()),
+                    ),
+                  ),
+                ],
+                if (_isManager) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Management', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.groups_rounded,
+                    iconColor: AppColors.info,
+                    iconBg: AppColors.infoSoft,
+                    title: 'Today\'s Attendance',
+                    subtitle: 'See who\'s in, late, or absent — all branches',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const TodayAttendanceScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.groups_2_rounded,
+                    iconColor: AppColors.primary,
+                    iconBg: AppColors.primary.withValues(alpha: 0.10),
+                    title: 'All Members',
+                    subtitle: 'Roster and branches at a glance',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MembersScreen()),
                     ),
                   ),
                 ],
@@ -211,6 +243,8 @@ class _GreetingHeader extends StatelessWidget {
         return 'Super Admin';
       case 'admin':
         return 'Admin';
+      case 'manager':
+        return 'Manager';
       case 'supervisor':
         return 'Supervisor';
       default:

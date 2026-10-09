@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../shared/attendance_status.dart';
 import 'calendar_screen.dart';
 
 class TodayAttendanceScreen extends StatefulWidget {
@@ -83,6 +84,7 @@ class _TodayAttendanceScreenState extends State<TodayAttendanceScreen> {
                               name: name.isEmpty ? '(no name)' : name,
                               photoPath: m['photo_path'],
                               branchName: branchName == null ? m['branch_name'] : null,
+                              note: m['note'],
                               status: m['status'] ?? 'unscheduled',
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -105,6 +107,7 @@ class _MemberStatusTile extends StatelessWidget {
   final String name;
   final String? photoPath;
   final String? branchName;
+  final String? note;
   final String status;
   final VoidCallback onTap;
 
@@ -112,32 +115,18 @@ class _MemberStatusTile extends StatelessWidget {
     required this.name,
     required this.photoPath,
     required this.branchName,
+    required this.note,
     required this.status,
     required this.onTap,
   });
 
-  (Color, Color, String, IconData) get _style {
-    switch (status) {
-      case 'present':
-        return (AppColors.success, AppColors.successSoft, 'Present', Icons.check_circle_rounded);
-      case 'late':
-        return (AppColors.warning, AppColors.warningSoft, 'Late', Icons.schedule_rounded);
-      case 'open':
-        return (AppColors.info, AppColors.infoSoft, 'Clocked in', Icons.timelapse_rounded);
-      case 'absent':
-        return (AppColors.danger, AppColors.dangerSoft, 'Absent', Icons.cancel_rounded);
-      case 'upcoming':
-        return (AppColors.textSecondary, AppColors.surface, 'Not started', Icons.hourglass_empty_rounded);
-      case 'closed':
-        return (AppColors.textMuted, AppColors.surface, 'Day off', Icons.weekend_rounded);
-      default:
-        return (AppColors.textMuted, AppColors.surface, 'No schedule', Icons.help_outline_rounded);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final (color, bg, label, icon) = _style;
+    final style = statusStyle(status);
+    final subtitle = [
+      if (branchName != null) branchName!,
+      if (note != null && note!.isNotEmpty) note!,
+    ].join(' · ');
 
     return Material(
       color: AppColors.surfaceCard,
@@ -172,22 +161,23 @@ class _MemberStatusTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name, style: Theme.of(context).textTheme.titleSmall),
-                    if (branchName != null) ...[
+                    if (subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(branchName!, style: Theme.of(context).textTheme.bodySmall),
+                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.pill)),
+                decoration: BoxDecoration(color: style.soft, borderRadius: BorderRadius.circular(AppRadius.pill)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 13, color: color),
+                    Icon(style.icon, size: 13, color: style.color),
                     const SizedBox(width: 4),
-                    Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: color)),
+                    Text(style.label,
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: style.color)),
                   ],
                 ),
               ),

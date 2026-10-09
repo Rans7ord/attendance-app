@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../shared/attendance_status.dart';
 import 'member_attendance_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -58,29 +59,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _load();
   }
 
-  (Color, Color, String) _style(String status) {
-    switch (status) {
-      case 'present':
-        return (Colors.white, AppColors.success, 'Present');
-      case 'late':
-        return (Colors.white, AppColors.warning, 'Late');
-      case 'open':
-        return (Colors.white, AppColors.info, 'Clocked in');
-      case 'incomplete':
-        return (Colors.white, AppColors.accent, 'No clock-out');
-      case 'absent':
-        return (Colors.white, AppColors.danger, 'Absent');
-      case 'closed':
-        return (AppColors.textMuted, AppColors.surface, 'Day off');
-      case 'upcoming':
-        return (AppColors.textSecondary, AppColors.surfaceCard, 'Upcoming');
-      case 'not_joined':
-        return (AppColors.textMuted, Colors.transparent, 'Not joined yet');
-      default:
-        return (AppColors.textMuted, AppColors.surface, 'No schedule');
-    }
-  }
-
   String _formatTime(String raw) {
     final dt = DateTime.tryParse(raw);
     if (dt == null) return raw;
@@ -88,7 +66,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showDayDetail(Map<String, dynamic> day) {
-    final (_, color, label) = _style(day['status']);
+    final style = statusStyle(day['status']);
+    final note = day['note'] as String?;
+
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
@@ -101,9 +81,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const SizedBox(height: AppSpacing.sm),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(AppRadius.pill)),
-              child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              decoration: BoxDecoration(color: style.soft, borderRadius: BorderRadius.circular(AppRadius.pill)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(style.icon, size: 14, color: style.color),
+                  const SizedBox(width: 6),
+                  Text(style.label, style: TextStyle(color: style.color, fontWeight: FontWeight.w700)),
+                ],
+              ),
             ),
+            if (note != null && note.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(note, style: Theme.of(context).textTheme.bodyMedium),
+            ],
             if (day['clock_in'] != null) ...[
               const SizedBox(height: AppSpacing.md),
               Text('Clock in: ${_formatTime(day['clock_in'])}'),
@@ -203,7 +194,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               itemBuilder: (context, index) {
                 if (index < leadingBlanks) return const SizedBox.shrink();
                 final day = _days[index - leadingBlanks] as Map<String, dynamic>;
-                final (textColor, bg, _) = _style(day['status']);
+                final style = statusStyle(day['status']);
                 final dayNum = DateTime.parse(day['date']).day;
                 final isToday = day['date'] == todayString;
 
@@ -212,14 +203,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onTap: () => _showDayDetail(day),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: bg,
+                      color: style.solid ? style.color : style.soft,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       border: isToday ? Border.all(color: AppColors.primary, width: 2) : null,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '$dayNum',
-                      style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                        color: style.solid ? Colors.white : style.color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 );
@@ -232,14 +227,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildLegend(BuildContext context) {
-    const items = [
-      ('present', 'Present'),
-      ('late', 'Late'),
-      ('absent', 'Absent'),
-      ('open', 'Clocked in'),
-      ('incomplete', 'No clock-out'),
-      ('closed', 'Day off'),
-      ('upcoming', 'Upcoming'),
+    const statuses = [
+      'present', 'late', 'half_day', 'absent', 'leave', 'day_off',
+      'open', 'incomplete', 'closed', 'upcoming',
     ];
 
     return Padding(
@@ -247,14 +237,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       child: Wrap(
         spacing: AppSpacing.sm,
         runSpacing: 6,
-        children: items.map((item) {
-          final (_, color, label) = _style(item.$1);
+        children: statuses.map((s) {
+          final style = statusStyle(s);
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: style.color, shape: BoxShape.circle)),
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(style.label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
             ],
           );
         }).toList(),

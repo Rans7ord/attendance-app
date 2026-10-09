@@ -43,7 +43,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
   void _openCreateDialog() async {
     final nameController = TextEditingController();
     final addressController = TextEditingController();
-    final radiusController = TextEditingController(text: '150');
+    final radiusController = TextEditingController(text: '30');
     double? lat, lng;
 
     await showDialog(
@@ -182,7 +182,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
                     address: addressController.text.isEmpty ? null : addressController.text,
                     lat: lat!,
                     lng: lng!,
-                    radius: int.tryParse(radiusController.text) ?? 150,
+                    radius: int.tryParse(radiusController.text) ?? 30,
                   );
                   if (context.mounted) Navigator.pop(context);
                   _load();

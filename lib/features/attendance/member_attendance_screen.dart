@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../shared/attendance_status.dart';
 
 class MemberAttendanceScreen extends StatefulWidget {
   final int memberId;
@@ -109,22 +110,11 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, bg, label) = _style(status);
+    final style = statusStyle(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.pill)),
-      child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 11.5)),
+      decoration: BoxDecoration(color: style.soft, borderRadius: BorderRadius.circular(AppRadius.pill)),
+      child: Text(style.label, style: TextStyle(color: style.color, fontWeight: FontWeight.w700, fontSize: 11.5)),
     );
-  }
-
-  (Color, Color, String) _style(String status) {
-    switch (status) {
-      case 'late':
-        return (AppColors.warning, AppColors.warningSoft, 'Late');
-      case 'open':
-        return (AppColors.info, AppColors.infoSoft, 'Still in');
-      default:
-        return (AppColors.success, AppColors.successSoft, 'Present');
-    }
   }
 }

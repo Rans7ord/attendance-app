@@ -73,7 +73,12 @@ class _JoinScreenState extends State<JoinScreen> {
       );
       return;
     }
-    setState(() => _submitting = true);
+    if (_selectedBranchId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose your branch')),
+      );
+      return;
+    }
 
     final pin = _pinKey.currentState?.value ?? '';
     final confirmPin = _confirmPinKey.currentState?.value ?? '';
@@ -85,9 +90,11 @@ class _JoinScreenState extends State<JoinScreen> {
       setState(() => _pinError = 'PINs don\'t match');
       return;
     }
-    setState(() => _pinError = null);
-
-    setState(() => _loading = true);
+    setState(() {
+      _pinError = null;
+      _submitting = true;
+      _loading = true;
+    });
 
     try {
       await _api.registerMember(
@@ -98,7 +105,7 @@ class _JoinScreenState extends State<JoinScreen> {
         password: _passwordController.text,
         attendancePin: pin,
         phone: _phoneController.text.isEmpty ? null : _phoneController.text,
-        branchId: _selectedBranchId,
+        branchId: _selectedBranchId!,
         photo: _photo,
       );
       if (!mounted) return;
@@ -325,7 +332,7 @@ class _JoinScreenState extends State<JoinScreen> {
                               const SizedBox(height: AppSpacing.sm),
                               DropdownButtonFormField<int>(
                                 initialValue: _selectedBranchId,
-                                decoration: const InputDecoration(labelText: 'Branch (optional)'),
+                                decoration: const InputDecoration(labelText: 'Branch'),
                                 items: _branches
                                     .map<DropdownMenuItem<int>>((b) => DropdownMenuItem(
                                           value: b['id'],

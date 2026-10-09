@@ -7,8 +7,9 @@ class ApiService {
   // 10.0.2.2 for Android emulator; use your machine's LAN IP for a real phone.
   static const baseUrl = 'https://attendance.logoninvoice.com/api';
 
-  /// Called whenever the server returns 401 (expired/invalid/revoked
-  /// token) on any authenticated request. Set once in main.dart to
+  /// Called whenever the server says the session is no longer usable:
+  /// a 401 (expired/invalid/revoked token) or a 403 "account_inactive"
+  /// (an admin deactivated this account). Set once in main.dart to
   /// redirect to login. Kept as a callback (rather than importing a
   /// screen here) so this service doesn't depend on the UI layer.
   static VoidCallback? onUnauthorized;
@@ -21,7 +22,11 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+          final status = error.response?.statusCode;
+          final data = error.response?.data;
+          final code = data is Map ? data['code'] : null;
+
+          if (status == 401 || (status == 403 && code == 'account_inactive')) {
             await _storage.deleteAll();
             onUnauthorized?.call();
           }
@@ -150,7 +155,7 @@ class ApiService {
     String? address,
     required double lat,
     required double lng,
-    int radius = 150,
+    int radius = 30,
   }) async {
     final response = await _dio.post('/branches',
         data: {
@@ -236,7 +241,7 @@ class ApiService {
     required String password,
     required String attendancePin,
     String? phone,
-    int? branchId,
+    required int branchId,
     XFile? photo,
   }) async {
     final formData = FormData.fromMap({
@@ -247,7 +252,7 @@ class ApiService {
       'password': password,
       'attendance_pin': attendancePin,
       if (phone != null) 'phone': phone,
-      if (branchId != null) 'branch_id': branchId,
+      'branch_id': branchId,
       if (photo != null) 'photo': await _multipartFromXFile(photo),
     });
 
@@ -301,9 +306,12 @@ class ApiService {
         data: {'require_selfie_on_join': requireSelfieOnJoin}, options: await _authHeader());
   }
 
+  /// Replaces the join code — the old one stops working immediately, so
+  /// the server insists on confirm=true. The caller's dialog is the
+  /// confirmation; this just passes it along.
   Future<Map<String, dynamic>> regenerateJoinCode({int? expiresInDays, int? maxUses}) async {
     final response = await _dio.post('/company/regenerate-join-code',
-        data: {'expires_in_days': expiresInDays, 'max_uses': maxUses},
+        data: {'confirm': true, 'expires_in_days': expiresInDays, 'max_uses': maxUses},
         options: await _authHeader());
     return response.data;
   }

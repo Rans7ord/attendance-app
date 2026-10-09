@@ -159,6 +159,7 @@ class _JoinCodeScreenState extends State<JoinCodeScreen> {
                   items: const [
                     DropdownMenuItem(value: 'member', child: Text('Member')),
                     DropdownMenuItem(value: 'supervisor', child: Text('Supervisor')),
+                    DropdownMenuItem(value: 'manager', child: Text('Manager')),
                   ],
                   onChanged: (v) => setDialogState(() => role = v ?? 'member'),
                 ),
@@ -469,6 +470,8 @@ class _InviteCard extends StatelessWidget {
     switch (role) {
       case 'supervisor':
         return 'Supervisor';
+      case 'manager':
+        return 'Manager';
       case 'admin':
         return 'Admin';
       default:

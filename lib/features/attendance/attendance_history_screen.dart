@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/theme/app_theme.dart';
+import '../../shared/attendance_status.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
@@ -83,7 +84,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                                 clockIn: _formatDateTime(r['clock_in']),
                                 clockOut: stillIn ? null : _formatDateTime(r['clock_out']),
                                 duration: _formatDuration(r['clock_in'], r['clock_out']),
-                                status: r['status'] ?? (stillIn ? 'In progress' : 'present'),
+                                status: stillIn ? 'open' : (r['status'] ?? 'present'),
                                 stillIn: stillIn,
                               );
                             },
@@ -112,8 +113,9 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = stillIn ? AppColors.warning : AppColors.success;
-    final Color accentBg = stillIn ? AppColors.warningSoft : AppColors.successSoft;
+    final style = statusStyle(status);
+    final Color accent = style.color;
+    final Color accentBg = style.soft;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -130,7 +132,7 @@ class _RecordCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(color: accentBg, borderRadius: BorderRadius.circular(AppRadius.sm)),
             child: Icon(
-              stillIn ? Icons.timelapse_rounded : Icons.check_circle_rounded,
+              style.icon,
               size: 22,
               color: accent,
             ),
@@ -146,7 +148,7 @@ class _RecordCard extends StatelessWidget {
                     Expanded(
                       child: Text('In: $clockIn', style: Theme.of(context).textTheme.titleSmall),
                     ),
-                    _StatusChip(label: stillIn ? 'Still in' : status, color: accent, bg: accentBg),
+                    _StatusChip(label: style.label, color: accent, bg: accentBg),
                   ],
                 ),
                 const SizedBox(height: 4),
