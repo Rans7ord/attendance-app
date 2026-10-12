@@ -68,6 +68,27 @@ class ApiService {
     return response.data;
   }
 
+  /// Step 1 of "forgot password": the server emails a 6-digit code. It
+  /// answers the same way whether or not the email has an account.
+  Future<void> forgotPassword(String email) async {
+    await _dio.post('/forgot-password', data: {'email': email});
+  }
+
+  /// Step 2: the code from the email plus the new password.
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    await _dio.post('/reset-password', data: {
+      'email': email,
+      'code': code,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    });
+  }
+
   Future<String> getRole() async {
     return await _storage.read(key: 'role') ?? 'member';
   }
