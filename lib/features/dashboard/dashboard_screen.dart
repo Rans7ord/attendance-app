@@ -10,6 +10,11 @@ import '../admin/branches_screen.dart';
 import '../admin/join_code_screen.dart';
 import '../auth/login_screen.dart';
 import '../admin/members_screen.dart';
+import '../admin/days_off_screen.dart';
+import '../leave/leave_screen.dart';
+import '../leave/leave_review_screen.dart';
+import '../notifications/notification_bell.dart';
+import '../reports/reports_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -80,6 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
         title: const Text('Dashboard'),
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Log out',
@@ -133,6 +139,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       MaterialPageRoute(builder: (_) => const CalendarScreen()),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.beach_access_rounded,
+                    iconColor: AppColors.warning,
+                    iconBg: AppColors.warningSoft,
+                    title: 'My Leave',
+                    subtitle: 'Request leave and see days off',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LeaveScreen()),
+                    ),
+                  ),
                 ],
                 if (_isSupervisor) ...[
                   const SizedBox(height: AppSpacing.lg),
@@ -146,6 +163,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     subtitle: 'See who\'s in, late, or absent',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const TodayAttendanceScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.fact_check_rounded,
+                    iconColor: AppColors.success,
+                    iconBg: AppColors.successSoft,
+                    title: 'Leave Requests',
+                    subtitle: 'Review and approve time off',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LeaveReviewScreen()),
                     ),
                   ),
                 ],
@@ -172,6 +200,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     subtitle: 'Roster and branches at a glance',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const MembersScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.fact_check_rounded,
+                    iconColor: AppColors.success,
+                    iconBg: AppColors.successSoft,
+                    title: 'Leave Requests',
+                    subtitle: 'Review and approve time off',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LeaveReviewScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.celebration_rounded,
+                    iconColor: AppColors.info,
+                    iconBg: AppColors.infoSoft,
+                    title: 'Days Off',
+                    subtitle: 'Holidays, breaks and closures',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DaysOffScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.bar_chart_rounded,
+                    iconColor: AppColors.accent,
+                    iconBg: AppColors.accentSoft,
+                    title: 'Reports',
+                    subtitle: 'Attendance summaries and CSV export',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ReportsScreen()),
                     ),
                   ),
                 ],
@@ -211,6 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       MaterialPageRoute(builder: (_) => const JoinCodeScreen()),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
                   _DashboardCard(
                     icon: Icons.groups_2_rounded,
                     iconColor: AppColors.primary,
@@ -222,6 +284,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.fact_check_rounded,
+                    iconColor: AppColors.success,
+                    iconBg: AppColors.successSoft,
+                    title: 'Leave Requests',
+                    subtitle: 'Review and approve time off',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LeaveReviewScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.celebration_rounded,
+                    iconColor: AppColors.info,
+                    iconBg: AppColors.infoSoft,
+                    title: 'Days Off',
+                    subtitle: 'Holidays, breaks and closures',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DaysOffScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _DashboardCard(
+                    icon: Icons.bar_chart_rounded,
+                    iconColor: AppColors.accent,
+                    iconBg: AppColors.accentSoft,
+                    title: 'Reports',
+                    subtitle: 'Attendance summaries and CSV export',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ReportsScreen()),
+                    ),
+                  ),
                 ],
               ],
             ),

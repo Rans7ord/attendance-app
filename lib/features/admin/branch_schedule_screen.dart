@@ -15,9 +15,10 @@ class BranchScheduleScreen extends StatefulWidget {
 class _DaySchedule {
   bool isWorking;
   TimeOfDay startTime;
+  TimeOfDay? endTime; // optional expected end of the working day
   final TextEditingController graceController;
 
-  _DaySchedule({required this.isWorking, required this.startTime, required int grace})
+  _DaySchedule({required this.isWorking, required this.startTime, this.endTime, required int grace})
       : graceController = TextEditingController(text: grace.toString());
 }
 
@@ -58,9 +59,16 @@ class _BranchScheduleScreenState extends State<BranchScheduleScreen> {
       setState(() {
         for (final d in daysData) {
           final parts = (d['start_time'] as String).split(':');
+          final endRaw = d['expected_end_time'] as String?;
+          TimeOfDay? end;
+          if (endRaw != null && endRaw.contains(':')) {
+            final e = endRaw.split(':');
+            end = TimeOfDay(hour: int.parse(e[0]), minute: int.parse(e[1]));
+          }
           _days[d['day']] = _DaySchedule(
             isWorking: d['is_working'] as bool,
             startTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])),
+            endTime: end,
             grace: d['grace_minutes'] ?? 15,
           );
         }
@@ -83,6 +91,18 @@ class _BranchScheduleScreenState extends State<BranchScheduleScreen> {
     if (picked != null) setState(() => current.startTime = picked);
   }
 
+  Future<void> _pickEndTime(String day) async {
+    final current = _days[day]!;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: current.endTime ?? const TimeOfDay(hour: 17, minute: 0),
+    );
+    if (picked != null) setState(() => current.endTime = picked);
+  }
+
+  String _hhmm(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
   Future<void> _save() async {
     final payload = <Map<String, dynamic>>[];
 
@@ -95,12 +115,24 @@ class _BranchScheduleScreenState extends State<BranchScheduleScreen> {
         );
         return;
       }
+      final end = d.endTime;
+      if (d.isWorking && end != null) {
+        final startMinutes = d.startTime.hour * 60 + d.startTime.minute;
+        final endMinutes = end.hour * 60 + end.minute;
+        if (endMinutes <= startMinutes) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${_dayLabels[day]}: the end time must be after the start time')),
+          );
+          return;
+        }
+      }
       payload.add({
         'day': day,
         'is_working': d.isWorking,
-        'start_time':
-            '${d.startTime.hour.toString().padLeft(2, '0')}:${d.startTime.minute.toString().padLeft(2, '0')}',
+        'start_time': _hhmm(d.startTime),
         'grace_minutes': grace,
+        // null clears it; the server keeps no end time for the day.
+        'expected_end_time': end == null ? null : _hhmm(end),
       });
     }
 
@@ -156,6 +188,8 @@ class _BranchScheduleScreenState extends State<BranchScheduleScreen> {
                       schedule: _days[day]!,
                       onToggle: (v) => setState(() => _days[day]!.isWorking = v),
                       onPickTime: () => _pickTime(day),
+                      onPickEnd: () => _pickEndTime(day),
+                      onClearEnd: () => setState(() => _days[day]!.endTime = null),
                     )),
                 const SizedBox(height: AppSpacing.lg),
                 FilledButton(
@@ -176,12 +210,16 @@ class _DayCard extends StatelessWidget {
   final _DaySchedule schedule;
   final ValueChanged<bool> onToggle;
   final VoidCallback onPickTime;
+  final VoidCallback onPickEnd;
+  final VoidCallback onClearEnd;
 
   const _DayCard({
     required this.label,
     required this.schedule,
     required this.onToggle,
     required this.onPickTime,
+    required this.onPickEnd,
+    required this.onClearEnd,
   });
 
   @override
@@ -223,6 +261,27 @@ class _DayCard extends StatelessWidget {
                     onTap: onPickTime,
                   ),
                 ),
+                Expanded(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: const Icon(Icons.logout_rounded, color: AppColors.primary, size: 20),
+                    title: const Text('Expected end', style: TextStyle(fontSize: 12.5)),
+                    subtitle: Text(schedule.endTime == null ? 'Not set' : schedule.endTime!.format(context)),
+                    trailing: schedule.endTime == null
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            tooltip: 'Clear end time',
+                            onPressed: onClearEnd,
+                          ),
+                    onTap: onPickEnd,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
                 SizedBox(
                   width: 90,
                   child: TextField(

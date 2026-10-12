@@ -359,4 +359,218 @@ class ApiService {
     await _storage.write(key: 'role', value: response.data['role'] ?? 'member');
     return response.data;
   }
+
+  // ---- Leave ----
+
+  /// The logged-in user's own leave requests, newest first.
+  Future<List<dynamic>> getMyLeave() async {
+    final response = await _dio.get('/leave', options: await _authHeader());
+    return response.data;
+  }
+
+  /// [type] is 'full_day' or 'half_day'. Dates are "YYYY-MM-DD". A half-day
+  /// must be a single date. An admin's own request is approved instantly.
+  Future<Map<String, dynamic>> requestLeave({
+    required String type,
+    required String startDate,
+    required String endDate,
+    required String reason,
+  }) async {
+    final response = await _dio.post('/leave',
+        data: {'type': type, 'start_date': startDate, 'end_date': endDate, 'reason': reason},
+        options: await _authHeader());
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> cancelLeave(int id) async {
+    final response = await _dio.post('/leave/$id/cancel', options: await _authHeader());
+    return response.data;
+  }
+
+  /// Staff only. [status] is pending, approved, rejected, cancelled or all.
+  /// What comes back is scoped by role on the server.
+  Future<List<dynamic>> getLeaveReview({String status = 'pending'}) async {
+    final response = await _dio.get('/leave/review',
+        queryParameters: {'status': status}, options: await _authHeader());
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> approveLeave(int id, {String? note}) async {
+    final response = await _dio.post('/leave/$id/approve',
+        data: {if (note != null && note.isNotEmpty) 'note': note}, options: await _authHeader());
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> rejectLeave(int id, {String? note}) async {
+    final response = await _dio.post('/leave/$id/reject',
+        data: {if (note != null && note.isNotEmpty) 'note': note}, options: await _authHeader());
+    return response.data;
+  }
+
+  // ---- Notifications ----
+
+  /// Returns {unread_count, notifications: [...]} (latest 50).
+  Future<Map<String, dynamic>> getNotifications() async {
+    final response = await _dio.get('/notifications', options: await _authHeader());
+    return response.data;
+  }
+
+  /// Cheap call, meant for polling to drive the badge.
+  Future<int> getUnreadCount() async {
+    final response = await _dio.get('/notifications/unread-count', options: await _authHeader());
+    return (response.data['unread_count'] ?? 0) as int;
+  }
+
+  Future<void> markNotificationRead(int id) async {
+    await _dio.post('/notifications/$id/read', options: await _authHeader());
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    await _dio.post('/notifications/read-all', options: await _authHeader());
+  }
+
+  // ---- Days off ----
+
+  /// Anyone: upcoming days off that apply to the logged-in user.
+  Future<List<dynamic>> getMyDaysOff() async {
+    final response = await _dio.get('/days-off/mine', options: await _authHeader());
+    return response.data;
+  }
+
+  /// Admin/manager. Upcoming and current by default; [includePast] shows all.
+  Future<List<dynamic>> getDaysOff({bool includePast = false}) async {
+    final response = await _dio.get('/days-off',
+        queryParameters: includePast ? {'include_past': 1} : null, options: await _authHeader());
+    return response.data;
+  }
+
+  /// [scope] is 'company', 'branch' or 'members'. [kind] is 'holiday',
+  /// 'break' or 'closure'. [branchId] is needed for 'branch', [memberIds]
+  /// for 'members'. [endDate] defaults to [startDate] on the server.
+  Future<Map<String, dynamic>> createDayOff({
+    required String title,
+    required String kind,
+    required String scope,
+    required String startDate,
+    String? endDate,
+    int? branchId,
+    List<int>? memberIds,
+  }) async {
+    final response = await _dio.post('/days-off',
+        data: {
+          'title': title,
+          'kind': kind,
+          'scope': scope,
+          'start_date': startDate,
+          if (endDate != null) 'end_date': endDate,
+          if (branchId != null) 'branch_id': branchId,
+          if (memberIds != null) 'member_ids': memberIds,
+        },
+        options: await _authHeader());
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> updateDayOff(
+    int id, {
+    required String title,
+    required String kind,
+    required String scope,
+    required String startDate,
+    String? endDate,
+    int? branchId,
+    List<int>? memberIds,
+  }) async {
+    final response = await _dio.put('/days-off/$id',
+        data: {
+          'title': title,
+          'kind': kind,
+          'scope': scope,
+          'start_date': startDate,
+          if (endDate != null) 'end_date': endDate,
+          if (branchId != null) 'branch_id': branchId,
+          if (memberIds != null) 'member_ids': memberIds,
+        },
+        options: await _authHeader());
+    return response.data;
+  }
+
+  /// Deleting turns those days back into normal working days, so the
+  /// server needs confirm=true. The caller's dialog is the confirmation.
+  Future<void> deleteDayOff(int id) async {
+    await _dio.delete('/days-off/$id', data: {'confirm': true}, options: await _authHeader());
+  }
+
+  // ---- Member actions (admin only; each needs confirm=true) ----
+
+  /// [role] is member, supervisor, manager or admin. A branch is required
+  /// when moving someone to member or supervisor and they have none.
+  Future<Map<String, dynamic>> updateMemberRole(int memberId, String role, {int? branchId}) async {
+    final response = await _dio.put('/members/$memberId/role',
+        data: {'role': role, 'confirm': true, if (branchId != null) 'branch_id': branchId},
+        options: await _authHeader());
+    return response.data;
+  }
+
+  Future<void> deactivateMember(int memberId) async {
+    await _dio.post('/members/$memberId/deactivate',
+        data: {'confirm': true}, options: await _authHeader());
+  }
+
+  Future<void> reactivateMember(int memberId) async {
+    await _dio.post('/members/$memberId/reactivate', options: await _authHeader());
+  }
+
+  /// Only works for members with no attendance or leave history; the
+  /// server tells the caller to deactivate instead otherwise.
+  Future<void> deleteMember(int memberId) async {
+    await _dio.delete('/members/$memberId', data: {'confirm': true}, options: await _authHeader());
+  }
+
+  // ---- Reports (admin / manager) ----
+
+  Map<String, dynamic> _reportParams(String from, String to, int? branchId, bool includeInactive) => {
+        'from': from,
+        'to': to,
+        if (branchId != null) 'branch_id': branchId,
+        if (includeInactive) 'include_inactive': 1,
+      };
+
+  /// Per-branch and per-member counts for the range ("YYYY-MM-DD").
+  Future<Map<String, dynamic>> getReportSummary({
+    required String from,
+    required String to,
+    int? branchId,
+    bool includeInactive = false,
+  }) async {
+    final response = await _dio.get('/reports/summary',
+        queryParameters: _reportParams(from, to, branchId, includeInactive),
+        options: await _authHeader());
+    return response.data;
+  }
+
+  /// One member with a day-by-day breakdown.
+  Future<Map<String, dynamic>> getMemberReport(int memberId,
+      {required String from, required String to}) async {
+    final response = await _dio.get('/reports/members/$memberId',
+        queryParameters: {'from': from, 'to': to}, options: await _authHeader());
+    return response.data;
+  }
+
+  /// CSV file contents. [group] is member, branch or daily.
+  Future<List<int>> exportReportCsv({
+    required String from,
+    required String to,
+    String group = 'member',
+    int? branchId,
+    bool includeInactive = false,
+  }) async {
+    final options = (await _authHeader()).copyWith(responseType: ResponseType.bytes);
+    final response = await _dio.get<List<int>>('/reports/export',
+        queryParameters: {
+          ..._reportParams(from, to, branchId, includeInactive),
+          'group': group,
+        },
+        options: options);
+    return response.data ?? <int>[];
+  }
 }
