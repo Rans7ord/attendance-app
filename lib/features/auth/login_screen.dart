@@ -6,6 +6,7 @@ import '../../core/services/api_service.dart';
 import 'company_signup_screen.dart';
 import 'join_screen.dart';
 import 'accept_invite_screen.dart';
+import 'forgot_password_screen.dart';
 import '/features/auth/not_my_phone_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -109,7 +110,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ForgotPasswordScreen(initialEmail: _emailController.text.trim()),
+                              ),
+                            ),
+                            child: const Text('Forgot password?'),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
                         FilledButton(
                           onPressed: _loading ? null : _handleLogin,
                           child: _loading
